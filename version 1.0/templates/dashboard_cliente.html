@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Cliente — Tickets</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-white">
+  <header class="header">
+    <div>Bienvenido, {{ first_name }} {{ last_name }}</div>
+    <a href="{{ url_for('logout') }}" class="logout">Salir</a>
+  </header>
+  <main class="main">
+    <section class="ticket-form card">
+      <h2>Crear nuevo ticket</h2>
+      <form method="post">
+        <label>Tema del problema</label>
+        <select name="tema" id="tema" required>
+          <option value="" disabled selected>Selecciona un tema</option>
+          <option>Conexión lenta</option>
+          <option>Sin señal</option>
+          <option>Caída de red</option>
+          <option>WiFi no conecta</option>
+          <option>Otro</option>
+        </select>
+        <label>Descripción detallada</label>
+        <textarea name="descripcion" placeholder="Explica tu problema…" required></textarea>
+        <button type="submit" class="btn-primary">Enviar Ticket</button>
+      </form>
+    </section>
+    <section class="ticket-list">
+      <h2>Mis tickets</h2>
+      <div class="ticket-grid">
+        {% for t in tickets %}
+          <a href="{{ url_for('ticket_detail', tid=t._id) }}"
+             class="ticket-btn {{ t.status|replace(' ', '_') }}">
+            <div class="ticket-btn-content">
+              <span class="status">{{ t.status|capitalize }}</span>
+              <p class="tema">{{ t.tema }}</p>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+</body>
+</html>

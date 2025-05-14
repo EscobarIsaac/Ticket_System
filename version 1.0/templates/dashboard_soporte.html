@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Soporte — Tickets</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-white">
+  <header class="header">
+    <div>Soporte: {{ first_name }} {{ last_name }}</div>
+    <a href="{{ url_for('logout') }}" class="logout">Salir</a>
+  </header>
+  <main class="main">
+    <section class="ticket-list">
+      <h2>Tickets abiertos</h2>
+      <ul>
+        {% for t in open_tickets %}
+          <li class="ticket-item">
+            <div>{{ t.tema }} – {{ t.descripcion }}</div>
+            <form method="post">
+              <input type="hidden" name="ticket_id" value="{{ t._id }}">
+              <button>Asignarme</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="ticket-list">
+      <h2>Mis tickets en curso</h2>
+      <ul>
+        {% for t in assigned %}
+          <li class="ticket-item">{{ t.tema }} – {{ t.descripcion }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

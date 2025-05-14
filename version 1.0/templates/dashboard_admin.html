@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Técnico — Tickets</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-white">
+  <header class="header">
+    <div>Técnico: {{ first_name }} {{ last_name }}</div>
+    <a href="{{ url_for('logout') }}" class="logout">Salir</a>
+  </header>
+
+  <main class="main">
+    <!-- Usuarios Registrados -->
+    <section class="card ticket-list" style="flex:1">
+      <h2>Usuarios Registrados</h2>
+      <table class="admin-table">
+        <thead>
+          <tr><th>#</th><th>Usuario</th><th>Rol</th><th>Registro</th><th>F. Nac</th><th>Género</th></tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ u.username }}</td>
+            <td>{{ u.role }}</td>
+            <td>
+              {% if u.registered_at %}{{ u.registered_at.strftime("%Y-%m-%d %H:%M:%S") }}{% else %}—{% endif %}
+            </td>
+            <td>
+              {% if u.date_of_birth %}{{ u.date_of_birth.strftime("%Y-%m-%d") }}{% else %}—{% endif %}
+            </td>
+            <td>{{ u.gender or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Formulario para crear técnicos -->
+    <section class="card ticket-list" style="flex:1; margin-left:24px;">
+      <h2>Añadir nuevo Técnico</h2>
+      <form method="post">
+        <input type="text" name="new_support_username" placeholder="Usuario técnico" required>
+        <input type="password" name="new_support_password" placeholder="Contraseña" required>
+        <button type="submit" class="btn-primary">Crear Técnico</button>
+      </form>
+    </section>
+
+    <!-- Todos los Tickets -->
+    <section class="card ticket-list" style="flex:2; margin-left:24px;">
+      <h2>Todos los Tickets</h2>
+      <table class="admin-table">
+        <thead>
+          <tr><th>#</th><th>Cliente</th><th>Tema</th><th>Status</th><th>Asignado</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+          {% for t in tickets %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ t.cliente }}</td>
+            <td>{{ t.tema }}</td>
+            <td>{{ t.status }}</td>
+            <td>{{ t.asignado_a or '—' }}</td>
+            <td>
+              <form method="post" style="display:inline">
+                <input type="hidden" name="ticket_id" value="{{ t._id }}">
+                <select name="agent" required>
+                  <option disabled selected>Agente…</option>
+                  {% for a in agents %}<option>{{ a }}</option>{% endfor %}
+                </select>
+                <button name="action" value="asignar">Asignar</button>
+              </form>
+              {% if t.status != 'resuelto' %}
+              <form method="post" style="display:inline">
+                <input type="hidden" name="ticket_id" value="{{ t._id }}">
+                <button name="action" value="resolver">Resolver</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>
