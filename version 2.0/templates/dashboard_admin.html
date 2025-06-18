@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Admin — Tickets</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <!-- Inline CSS para alertas compactas -->
+  <style>
+    .notifications { margin:4px auto; padding:0 16px; max-width:1000px; }
+    .alert {
+      font-size:0.8rem; padding:4px 8px; margin-bottom:4px;
+      border-radius:4px; text-align:center; opacity:1;
+      transition:opacity 0.3s ease-out;
+    }
+    .alert.hide { opacity:0; }
+    .alert.success { background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
+    .alert.error   { background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+  </style>
+</head>
+<body class="bg-white">
+
+  <!-- Bloque de notificaciones -->
+  <div class="notifications">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, msg in messages %}
+        <div class="alert {{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <header class="header">
+    <div>Admin: {{ first_name }} {{ last_name }}</div>
+    <a href="{{ url_for('logout') }}" class="logout">Salir</a>
+  </header>
+
+  <main class="main">
+    <!-- Usuarios registrados -->
+    <section class="card" style="flex:1;">
+      <h2>Usuarios Registrados</h2>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Usuario</th><th>Rol</th><th>Registro</th><th>F. Nac</th><th>Género</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ u.username }}</td>
+              <td>{{ u.role }}</td>
+              <td>{{ u.registered_at or '—' }}</td>
+              <td>{{ u.date_of_birth or '—' }}</td>
+              <td>{{ u.gender or '—' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Crear nuevo técnico -->
+    <section class="card" style="flex:1;">
+      <h2>Añadir nuevo Técnico</h2>
+      <form method="post">
+        <input name="new_support_username" placeholder="Usuario técnico" required><br>
+        <input name="new_support_password" placeholder="Contraseña" type="password" required><br>
+        <button class="btn-primary" type="submit">Crear Técnico</button>
+      </form>
+    </section>
+
+    <!-- Todos los tickets -->
+    <section class="card" style="flex:2;">
+      <h2>Todos los Tickets</h2>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Cliente</th><th>Tema</th><th>Status</th><th>Prioridad</th><th>Asignado</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tickets %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ t.cliente }}</td>
+              <td>{{ t.tema }}</td>
+              <td>{{ t.status }}</td>
+              <td>{{ t.priority }}</td>
+              <td>{{ t.asignado_a or '—' }}</td>
+              <td>
+                <form method="post" style="display:flex; align-items:center; gap:4px;">
+                  <input type="hidden" name="ticket_id" value="{{ t._id }}">
+
+                  <!-- Selector de prioridad -->
+                  <select name="priority" style="font-size:0.8rem; padding:2px 4px;">
+                    <option value="alta"   {% if t.priority=='alta'  %}selected{% endif %}>Alta</option>
+                    <option value="media"  {% if t.priority=='media' %}selected{% endif %}>Media</option>
+                    <option value="baja"   {% if t.priority=='baja'  %}selected{% endif %}>Baja</option>
+                  </select>
+
+                  <!-- Selector de agente -->
+                  <select name="agent" style="font-size:0.8rem; padding:2px 4px;">
+                    <option value="">Agente…</option>
+                    {% for a in agents %}
+                      <option value="{{ a }}">{{ a }}</option>
+                    {% endfor %}
+                  </select>
+
+                  <button name="action" value="asignar">Asignar</button>
+                  {% if t.status != 'resuelto' %}
+                    <button name="action" value="resolver">Resolver</button>
+                  {% endif %}
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- Auto-ocultar alertas -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const alerts = document.querySelectorAll('.alert');
+      if (!alerts.length) return;
+      setTimeout(() => alerts.forEach(a => a.classList.add('hide')), 2500);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+Flask           # Microframework web
+pymongo         # Cliente MongoDB
+werkzeug        # Utilidades de seguridad (hash de contraseñas)
+certifi         # Certificados TLS para PyMongo
+python-dotenv   # Carga automática de variables de entorno desde .env

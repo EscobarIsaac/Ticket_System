@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Registro Cliente — TicketSystem</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-white">
+  <div class="login-container">
+    <h2>Registro de Cliente</h2>
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% for cat,msg in msgs %}<div class="{{cat}}">{{msg}}</div>{% endfor %}
+    {% endwith %}
+    <form method="post" novalidate>
+      <input type="text"
+             name="first_name"
+             placeholder="Nombre"
+             pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ ]{2,50}"
+             title="Sólo letras y espacios (2–50)"
+             required>
+      <input type="text"
+             name="last_name"
+             placeholder="Apellido"
+             pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ ]{2,50}"
+             title="Sólo letras y espacios (2–50)"
+             required>
+      <input type="text" name="username" placeholder="Usuario" minlength="3" maxlength="30" required>
+      <input type="password" name="password" placeholder="Contraseña" minlength="6" required>
+
+      <label for="date_of_birth">Fecha de nacimiento</label>
+      <input type="date" name="date_of_birth" id="date_of_birth" required>
+
+      <label for="gender">Género</label>
+      <select name="gender" id="gender" required>
+        <option value="" disabled selected>Selecciona género</option>
+        <option value="masculino">Masculino</option>
+        <option value="femenino">Femenino</option>
+        <option value="no_especifico">No específico</option>
+      </select>
+
+      <button type="submit">Registrarse</button>
+    </form>
+    <p>¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a></p>
+  </div>
+</body>
+</html>
