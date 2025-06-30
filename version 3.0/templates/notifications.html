@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Notificaciones — Tickets</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-white">
+  <header class="header">
+    <div>Notificaciones para {{ first_name }} {{ last_name }}</div>
+    <a href="{{ url_for('dashboard') }}" class="logout">Volver</a>
+  </header>
+
+  <main class="main">
+    <section class="card" style="flex: 1; max-width: 600px; margin: 32px auto;">
+      <h2>Tus notificaciones</h2>
+      <ul style="list-style:none; padding:0;">
+        {% for n in notifs %}
+          <li style="padding:8px; border-bottom:1px solid #eee;">
+            <small style="color:#666;">{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</small><br>
+            {{ n.message }}
+          </li>
+        {% endfor %}
+        {% if notifs|length == 0 %}
+          <li style="padding:8px; color:#777;">No tienes notificaciones.</li>
+        {% endif %}
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Cliente — Tickets</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .notifications {
+      margin: 4px auto;
+      padding: 0 16px;
+      max-width: 1000px;
+    }
+
+    .alert {
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      margin-bottom: 4px;
+      border-radius: 4px;
+      text-align: center;
+      opacity: 1;
+      transition: opacity 0.3s ease-out;
+    }
+
+    .alert.hide {
+      opacity: 0;
+    }
+
+    .alert.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .notif-icon {
+      position: relative;
+      display: inline-block;
+      font-size: 18px;
+      color: #007bff;
+      margin-left: 16px;
+    }
+
+    .notif-icon .badge {
+      position: absolute;
+      top: -6px;
+      right: -10px;
+      background: #dc3545;
+      color: #fff;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      background-color: #e9f7fe;
+      font-weight: bold;
+    }
+
+    .logout {
+      margin-left: 10px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+    }
+  </style>
+</head>
+<body class="bg-white">
+
+  <!-- Bloque de notificaciones flash -->
+  <div class="notifications">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, msg in messages %}
+        <div class="alert {{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <header class="header">
+    <div>Bienvenido, {{ first_name }} {{ last_name }}</div>
+    <div class="header-right">
+      <div class="notif-icon">
+        <a href="{{ url_for('notifications_view') }}">🔔
+          {% if notif_count and notif_count > 0 %}
+            <span class="badge">{{ notif_count }}</span>
+          {% endif %}
+        </a>
+      </div>
+      <a href="{{ url_for('logout') }}" class="logout">Salir</a>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Formulario para crear tickets -->
+    <section class="ticket-form card">
+      <h2>Crear nuevo ticket</h2>
+      <form method="post">
+        <label for="tema">Tema del problema</label>
+        <select name="tema" id="tema" required>
+          <option value="" disabled selected>Selecciona un tema</option>
+          <option>Conexión lenta</option>
+          <option>Sin señal</option>
+          <option>Caída de red</option>
+          <option>WiFi no conecta</option>
+          <option>Otro</option>
+        </select>
+
+        <label for="descripcion">Descripción detallada</label>
+        <textarea id="descripcion" name="descripcion" placeholder="Explica tu problema…" required></textarea>
+
+        <button type="submit" class="btn-primary">Enviar Ticket</button>
+      </form>
+    </section>
+
+    <!-- Listado de tickets del usuario -->
+    <section class="ticket-list">
+      <h2>Mis tickets</h2>
+      <div class="ticket-grid">
+        {% for t in tickets %}
+          <a href="{{ url_for('ticket_detail', tid=t._id) }}"
+             class="ticket-btn {{ t.status|replace(' ', '_') }}">
+            <div class="ticket-btn-content">
+              <span class="status">{{ t.status|capitalize }}</span>
+              <p class="tema">
+                {{ t.tema }}
+                {% if t.priority %}
+                  <small class="priority">({{ t.priority|capitalize }})</small>
+                {% endif %}
+              </p>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const alerts = document.querySelectorAll('.alert');
+      if (!alerts.length) return;
+      setTimeout(() => alerts.forEach(a => a.classList.add('hide')), 2500);
+    });
+  </script>
+</body>
+</html>

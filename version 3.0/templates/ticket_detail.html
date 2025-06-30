@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Detalle Ticket</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-white">
+  <header class="header">
+    <div>Ticket {{ ticket._id }}</div>
+    <a href="{{ url_for('dashboard') }}" class="logout">Volver</a>
+  </header>
+  <main class="main">
+    <div class="card ticket-list" style="width:400px; margin:auto">
+      <h2>{{ ticket.tema }}</h2>
+      <p><strong>Status:</strong> {{ ticket.status }}</p>
+      <p><strong>Descripción:</strong><br>{{ ticket.descripcion }}</p>
+      <p><strong>Historial:</strong></p>
+      <ul>
+        {% for h in ticket.history %}
+          <li>{{ h.at.strftime("%Y-%m-%d %H:%M") }} — {{ h.actor }}: {{ h.action }}</li>
+        {% endfor %}
+      </ul>
+      <button onclick="window.print()">Guardar / Imprimir</button>
+    </div>
+  </main>
+</body>
+</html>
