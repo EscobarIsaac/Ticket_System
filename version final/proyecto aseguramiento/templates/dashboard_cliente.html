@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Cliente — Tickets</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* Layout básico */
+    .header{
+      display:flex;justify-content:space-between;align-items:center;
+      background:#e9f7fe;padding:12px 16px;font-weight:600
+    }
+    .header .right{display:flex;align-items:center;gap:10px}
+    .notif-icon{position:relative;font-size:18px}
+    .notif-icon .badge{
+      position:absolute;top:-6px;right:-10px;background:#dc3545;color:#fff;border-radius:50%;
+      padding:2px 6px;font-size:.7rem
+    }
+    .logout{margin-left:8px}
+
+    .container{max-width:1150px;margin:18px auto;padding:0 12px}
+    .grid{
+      display:grid;grid-template-columns:1fr 1fr;gap:18px
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+
+    /* Crear ticket */
+    .card{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:18px}
+    .card h2{margin-top:0}
+    .form-row{margin:10px 0}
+    .form-row select,.form-row textarea,.form-row input{
+      width:100%;padding:10px;border:1px solid #ddd;border-radius:6px
+    }
+    .btn-primary{
+      background:#1677ff;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer
+    }
+    .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+
+    /* Mis tickets */
+    .tickets-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    @media (max-width: 1024px){ .tickets-wrap{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width: 680px){ .tickets-wrap{grid-template-columns:1fr} }
+
+    .ticket-card{
+      border:1px solid #e7ebf0;background:#fff;border-radius:10px;padding:12px;cursor:pointer;
+      transition:box-shadow .15s
+    }
+    .ticket-card:hover{box-shadow:0 8px 20px rgba(0,0,0,.07)}
+    .status{
+      font-size:.8rem;font-weight:700;margin-bottom:4px
+    }
+    .status.abierto{color:#8a6d3b}
+    .status.en-progreso{color:#0d6efd}
+    .status.resuelto{color:#198754}
+    .muted{font-size:.8rem;color:#667085}
+
+    /* Chat flotante */
+    .chat-toggle{
+      position:fixed;right:22px;bottom:22px;background:#1677ff;color:#fff;border:none;
+      width:52px;height:52px;border-radius:50%;font-size:22px;display:flex;align-items:center;justify-content:center;
+      box-shadow:0 8px 20px rgba(0,0,0,.2);cursor:pointer;z-index:1001
+    }
+    .chat{
+      position:fixed;right:22px;bottom:90px;width:360px;max-height:520px;background:#fff;border-radius:12px;
+      box-shadow:0 14px 30px rgba(0,0,0,.18);display:none;flex-direction:column;overflow:hidden;z-index:1001
+    }
+    .chat-header{
+      background:#1677ff;color:#fff;padding:10px 12px;display:flex;align-items:center;justify-content:space-between
+    }
+    .chat-title{display:flex;align-items:center;gap:8px}
+    .chat-body{padding:10px;overflow-y:auto;flex:1;background:#f7f9fc}
+    .chat-input{
+      display:flex;border-top:1px solid #e9edf3
+    }
+    .chat-input input{
+      flex:1;padding:10px;border:none;outline:none
+    }
+    .chat-input button{
+      border:none;background:#1677ff;color:#fff;padding:10px 14px;cursor:pointer
+    }
+    .msg{margin-bottom:8px;max-width:85%}
+    .msg.user{
+      background:#e9f2ff;margin-left:auto;border-radius:14px 14px 2px 14px;padding:8px 10px
+    }
+    .msg.bot{
+      background:#eaf7ea;border-radius:14px 14px 14px 2px;padding:8px 10px
+    }
+    .msg small{display:block;color:#6b7280;margin-top:4px}
+  </style>
+</head>
+<body class="bg-white">
+
+  <header class="header">
+    <div>Bienvenido, {{ first_name }} {{ last_name }}</div>
+    <div class="right">
+      <span class="notif-icon">
+        <a href="{{ url_for('notifications_view') }}">🔔</a>
+        {% if notif_count and notif_count > 0 %}
+          <span class="badge">{{ notif_count }}</span>
+        {% endif %}
+      </span>
+      <a href="{{ url_for('logout') }}" class="logout">Salir</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+
+      <!-- Crear nuevo ticket -->
+      <section class="card">
+        <h2>Crear nuevo ticket</h2>
+        <form method="post" action="{{ url_for('dashboard') }}">
+          <div class="form-row">
+            <label for="tema">Tema del problema</label>
+            <select id="tema" name="tema" required>
+              <option value="" disabled selected>Selecciona un tema</option>
+              <option>Sin señal</option>
+              <option>Caída de red</option>
+              <option>Conexión lenta</option>
+              <option>WiFi no conecta</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="descripcion">Descripción detallada</label>
+            <textarea id="descripcion" name="descripcion" rows="5" placeholder="Explica tu problema..."></textarea>
+          </div>
+          <button class="btn-primary" type="submit">Enviar Ticket</button>
+        </form>
+      </section>
+
+      <!-- Mis tickets -->
+      <section class="card">
+        <h2>Mis tickets</h2>
+        <div class="tickets-wrap">
+          {% for t in tickets %}
+            <div class="ticket-card" onclick="selectTicket('{{ t._id }}', '{{ t.tema }}')">
+              <div class="status {% if t.status=='abierto' %}abierto{% elif t.status=='en progreso' %}en-progreso{% else %}resuelto{% endif %}">
+                {{ t.status|upper }}
+              </div>
+              <div><strong>{{ t.tema }}</strong></div>
+              <div class="muted">
+                {% if t.priority %} ({{ t.priority|capitalize }}){% endif %}
+              </div>
+            </div>
+          {% else %}
+            <p class="muted">Aún no tienes tickets.</p>
+          {% endfor %}
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Botón flotante -->
+  <button class="chat-toggle" id="chatToggle" title="Abrir chat" onclick="toggleChat()">💬</button>
+
+  <!-- Chat -->
+  <div class="chat" id="chatWindow" aria-live="polite">
+    <div class="chat-header">
+      <div class="chat-title">
+        <strong>Asistente Virtual</strong>
+        <span id="chatTopicBadge" class="badge" style="background:#0d6efd;border-radius:10px;padding:2px 8px; font-size:.8rem">—</span>
+      </div>
+      <button onclick="closeChat()" title="Cerrar" style="background:transparent;color:#fff;border:none;font-size:18px;cursor:pointer">✖</button>
+    </div>
+    <div class="chat-body" id="chatMessages"></div>
+    <div class="chat-input">
+      <input id="chatInput" type="text" placeholder="Describe tu problema..." disabled>
+      <button id="chatSendBtn" onclick="sendChat()" disabled>Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    // --- Estado del chat ---
+    let chatOpen = false;
+    let chatTicketId = null;
+    let chatTopic = null;
+
+    const $chat = () => document.getElementById('chatWindow');
+    const $msgs = () => document.getElementById('chatMessages');
+    const $input = () => document.getElementById('chatInput');
+    const $btn = () => document.getElementById('chatSendBtn');
+    const $badge = () => document.getElementById('chatTopicBadge');
+
+    // --- Util ---
+    function scrollBottom(){
+      const el = $msgs();
+      el.scrollTop = el.scrollHeight;
+    }
+    function pushUser(text){
+      const d = document.createElement('div');
+      d.className = 'msg user';
+      d.textContent = text;
+      $msgs().appendChild(d);
+      scrollBottom();
+    }
+    function pushBot(text){
+      const d = document.createElement('div');
+      d.className = 'msg bot';
+      d.innerHTML = text.replace(/\n/g,'<br>');
+      $msgs().appendChild(d);
+      scrollBottom();
+    }
+
+    // --- Abrir/Cerrar ---
+    function openChat(){
+      $chat().style.display = 'flex';
+      chatOpen = true;
+    }
+    function closeChat(){
+      $chat().style.display = 'none';
+      chatOpen = false;
+    }
+    function toggleChat(){
+      if(chatOpen){ closeChat(); } else { openChat(); }
+    }
+    function ensureChatOpen(topic){
+      if(!chatOpen) openChat();
+      $badge().textContent = topic || '—';
+      // habilitar input solo si hay ticket seleccionado
+      const enabled = Boolean(chatTicketId);
+      $input().disabled = !enabled;
+      $btn().disabled = !enabled;
+    }
+
+    // --- Seleccionar ticket ---
+    window.selectTicket = function(id, tema){
+      chatTicketId = id;
+      chatTopic = tema;
+      ensureChatOpen(tema);
+
+      // limpiar mensajes al cambiar de ticket
+      $msgs().innerHTML = '';
+      // consulta inmediata al backend para saber si está resuelto o enviar primer guía
+      fetch('/chat-experto', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ ticketId: chatTicketId, descripcion: '__init__' })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if(data && data.respuesta){
+          pushBot(data.respuesta);
+        }
+        if(data && data.end){
+          $input().disabled = true;
+          $btn().disabled = true;
+        }else{
+          $input().disabled = false;
+          $btn().disabled = false;
+          $input().focus();
+        }
+      })
+      .catch(() => {
+        pushBot('No pude abrir la conversación. Intenta de nuevo.');
+      });
+    }
+
+    // --- Enviar mensaje ---
+    function sendChat(){
+      const txt = $input().value.trim();
+      if(!txt || !chatTicketId) return;
+      pushUser(txt);
+      $input().value = '';
+
+      fetch('/chat-experto', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ ticketId: chatTicketId, descripcion: txt })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if(data && data.respuesta) pushBot(data.respuesta);
+        if(data && data.end){
+          $input().disabled = true;
+          $btn().disabled = true;
+        }
+      })
+      .catch(() => pushBot('Ocurrió un error al comunicar con el asistente.'));
+    }
+
+    // Enter para enviar
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' && chatOpen && !$input().disabled){
+        e.preventDefault();
+        sendChat();
+      }
+    });
+  </script>
+</body>
+</html>

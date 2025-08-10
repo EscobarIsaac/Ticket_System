@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Resolver Tickets — Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .wrap { max-width:1200px; margin:14px auto; padding:0 16px; }
+    .header {
+      display:flex; align-items:center; justify-content:space-between;
+      background:#e9f7fe; padding:10px 16px; border-radius:8px;
+      font-weight:600;
+    }
+    .notif-area{ display:flex; align-items:center; gap:10px; }
+    .notif-icon{ position:relative; font-size:1.2rem; }
+    .notif-icon .badge{
+      position:absolute; top:-6px; right:-10px; background:#dc3545; color:#fff;
+      border-radius:50%; padding:2px 6px; font-size:.7rem;
+    }
+    .btn { padding:8px 12px; border-radius:6px; border:0; cursor:pointer; font-weight:600; }
+    .btn-primary{ background:#0d6efd; color:#fff; }
+    .btn-secondary{ background:#6c757d; color:#fff; }
+    .btn-success{ background:#198754; color:#fff; }
+    .btn-outline{ background:#fff; border:1px solid #ccc; }
+    .grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap:18px; margin-top:16px; }
+    .card{
+      background:#fff; border-radius:10px; box-shadow: 0 4px 10px rgba(0,0,0,.06);
+      padding:16px;
+    }
+    .card h2{ margin-top:0; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; }
+    .row > * { flex:1; min-width:200px; }
+    .form-control, select, textarea{
+      width:100%; padding:8px 10px; border:1px solid #d8d8d8; border-radius:6px;
+    }
+    textarea{ min-height:88px; resize:vertical; }
+    .table{ width:100%; border-collapse:collapse; margin-top:12px; }
+    .table th, .table td{ padding:8px 10px; border-bottom:1px solid #eee; font-size:.95rem; }
+    .chip{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:.8rem; }
+    .chip.green{ background:#e6f4ea; color:#1e7e34; border:1px solid #c8e6c9; }
+    .chip.orange{ background:#fff3cd; color:#8a6d3b; border:1px solid #ffe69c; }
+    .chip.gray{ background:#f0f0f0; color:#555; border:1px solid #e2e2e2; }
+    .actions{ display:flex; gap:8px; }
+    .top-actions{ display:flex; align-items:center; gap:10px; }
+    .note{ color:#6c757d; font-size:.9rem; }
+  </style>
+</head>
+<body class="bg-white">
+  <div class="wrap">
+
+    <header class="header">
+      <div>Administrador: {{ first_name }} {{ last_name }}</div>
+      <div class="top-actions">
+        <div class="notif-area">
+          <a class="notif-icon" title="Notificaciones" href="{{ url_for('notifications_view') }}">🔔
+            {% if notif_count and notif_count > 0 %}<span class="badge">{{ notif_count }}</span>{% endif %}
+          </a>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Volver al Panel</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline">Salir</a>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Resolución / Asignación -->
+      <section class="card">
+        <h2>Resolver / Asignar Ticket</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, msg in messages %}
+            <div class="alert {{ category }}" style="margin:6px 0;">{{ msg }}</div>
+          {% endfor %}
+        {% endwith %}
+
+        <form method="post" class="row" style="margin-top:10px;">
+          <div>
+            <label>Selecciona un ticket</label>
+            <select name="ticket_id" class="form-control" required>
+              <option value="" disabled selected>— Selecciona —</option>
+              {% for t in tickets %}
+                <option value="{{ t._id }}">{{ t.tema }} — {{ t.status }} — {{ t.cliente }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label>Prioridad</label>
+            <select name="priority" class="form-control">
+              <option value="alta">Alta</option>
+              <option value="media" selected>Media</option>
+              <option value="baja">Baja</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Asignar a agente</label>
+            <select name="agent" class="form-control">
+              <option value="">— Sin asignar —</option>
+              {% for a in agents %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+            </select>
+          </div>
+
+          <div style="flex-basis:100%;">
+            <label>Solución (opcional al resolver)</label>
+            <textarea name="solution" placeholder="Describe la solución aplicada…"></textarea>
+          </div>
+
+          <div class="actions" style="flex-basis:100%; justify-content:flex-end;">
+            <button name="action" value="asignar" class="btn btn-outline">Asignar</button>
+            <button name="action" value="resolver" class="btn btn-success">Marcar como Resuelto</button>
+          </div>
+        </form>
+
+        <p class="note">Consejo: puedes asignar primero y luego resolver con la solución escrita.</p>
+      </section>
+
+      <!-- Listado de tickets pendientes -->
+      <section class="card">
+        <h2>Tickets Pendientes</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Tema</th>
+              <th>Status</th>
+              <th>Prioridad</th>
+              <th>Cliente</th>
+              <th>Asignado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in tickets %}
+              <tr>
+                <td>{{ t.tema }}</td>
+                <td>
+                  {% if t.status == 'en progreso' %}
+                    <span class="chip orange">En progreso</span>
+                  {% elif t.status == 'abierto' %}
+                    <span class="chip gray">Abierto</span>
+                  {% else %}
+                    <span class="chip">{{ t.status }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ t.priority|default('—') }}</td>
+                <td>{{ t.cliente }}</td>
+                <td>{{ t.asignado_a or '—' }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="5">No hay tickets pendientes 🎉</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // auto-hide flashes
+    setTimeout(() => {
+      document.querySelectorAll('.alert.success, .alert.error').forEach(el => el.style.display='none');
+    }, 2500);
+  </script>
+</body>
+</html>

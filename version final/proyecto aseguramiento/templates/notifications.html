@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Notificaciones</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body { font-family: sans-serif; background: #f4f4f4; }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #007bff;
+      color: white;
+      padding: 12px 20px;
+    }
+
+    .notif-icon {
+      position: relative;
+      font-size: 1.2rem;
+      margin-right: 12px;
+    }
+
+    .notif-icon .badge {
+      position: absolute;
+      top: -6px;
+      right: -10px;
+      background: #ffc107;
+      color: #000;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+    }
+
+    .logout {
+      color: white;
+      text-decoration: none;
+      margin-left: 16px;
+      background: #dc3545;
+      padding: 6px 12px;
+      border-radius: 4px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .container h2 {
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .notif-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .notif-list li {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .notif-list li:last-child {
+      border-bottom: none;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div>
+      Notificaciones para {{ first_name }} {{ last_name }}
+    </div>
+    <div>
+      <span class="notif-icon">
+        <a href="{{ url_for('notifications_view') }}">🔔</a>
+        {% if notif_count and notif_count > 0 %}
+          <span class="badge">{{ notif_count }}</span>
+        {% endif %}
+      </span>
+      <a href="{{ url_for('logout') }}" class="logout">Salir</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <h2>Historial de Notificaciones</h2>
+    <ul class="notif-list">
+      {% for n in notifs %}
+        <li>{{ n.message }} <br><small>{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</small></li>
+      {% else %}
+        <li>No tienes notificaciones recientes.</li>
+      {% endfor %}
+    </ul>
+    <a class="back-link" href="{{ url_for('dashboard') }}">← Volver al Panel</a>
+  </div>
+
+</body>
+</html>

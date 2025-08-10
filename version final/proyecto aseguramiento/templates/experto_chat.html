@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Asistente Virtual — Tickets</title>
+  <link rel="icon" href="data:;base64,="><!-- evita 404 de favicon -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .chat-wrap { max-width: 900px; margin: 20px auto; }
+    .chat-card { display:flex; flex-direction:column; height: 520px; }
+    .chat-header-mini{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-weight:600; color:#333; }
+    .chat-box { flex:1; border:1px solid #e0e0e0; border-radius:8px; padding:12px; overflow-y:auto; background:#fff; }
+    .msg { margin:6px 0; max-width: 80%; }
+    .msg.bot { background:#f1f8ff; border:1px solid #cfe8ff; color:#003c74; padding:8px 10px; border-radius:10px 10px 10px 4px; }
+    .msg.user { margin-left:auto; background:#e9ffe9; border:1px solid #c7f3c7; color:#0f5132; padding:8px 10px; border-radius:10px 10px 4px 10px; }
+    .chat-input { display:flex; gap:8px; margin-top:10px; }
+    .chat-input input { flex:1; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:1rem; }
+    .chat-input button { padding:10px 16px; background:#007bff; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+    .chat-input button:hover { background:#005fd1; }
+    .notif-icon { position:relative; display:inline-block; margin-right:16px; font-size:1.1rem; }
+    .notif-icon .badge { position:absolute; top:-6px; right:-10px; background:#dc3545; color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem; }
+  </style>
+</head>
+<body class="bg-white">
+
+  <div class="notifications">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, msg in messages %}
+        <div class="alert {{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <header class="header">
+    <div>Asistente Virtual — {{ first_name }} {{ last_name }}</div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="notif-icon">
+        <a href="{{ url_for('notifications_view') }}">🔔</a>
+        {% if notif_count and notif_count > 0 %}
+          <span class="badge">{{ notif_count }}</span>
+        {% endif %}
+      </span>
+      <a href="{{ url_for('dashboard') }}" class="logout" style="margin-right:8px;">← Volver</a>
+      <a href="{{ url_for('logout') }}" class="logout">Salir</a>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="chat-wrap card chat-card" style="width:100%;">
+      <div class="chat-header-mini">
+        <span>Chat con el Asistente</span>
+        <small style="color:#666;">Describe tu problema; si no puedo ayudarte, asigno un técnico 🧑‍💻</small>
+      </div>
+
+      <div id="chatBox" class="chat-box">
+        <div class="msg bot">
+          ¡Hola! Soy tu asistente virtual. Cuéntame tu problema (ej: “no tengo señal”, “wifi no conecta”, “conexión lenta”…).
+        </div>
+      </div>
+
+      <form id="chatForm" class="chat-input">
+        <input id="chatInput" type="text" placeholder="Escribe tu pregunta o describe el problema…" autocomplete="off" required>
+        <button type="submit">Enviar</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const chatForm  = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatBox   = document.getElementById('chatBox');
+
+    function appendMessage(text, who) {
+      const div = document.createElement('div');
+      div.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
+      div.textContent = text;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text) return;
+      appendMessage(text, 'user');
+      chatInput.value = '';
+
+      try {
+        const res = await fetch('{{ chat_post_url }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ descripcion: text })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        appendMessage(data.respuesta || 'No recibí respuesta del asistente.', 'bot');
+      } catch (err) {
+        appendMessage('Ocurrió un error al contactar al asistente.', 'bot');
+      }
+    });
+  </script>
+</body>
+</html>

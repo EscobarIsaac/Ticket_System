@@ -1,0 +1,8 @@
+Flask
+pymongo
+werkzeug
+certifi
+python-dotenv
+pytest
+mongomock
+coverage

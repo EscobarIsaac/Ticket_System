@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Soporte — Tickets</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* ------ Layout ------ */
+    body { background:#fafafa; }
+    .header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 18px; background:#f1f7ff; border-bottom:1px solid #e5eefc;
+      font-weight:600;
+    }
+    .notif-wrap { display:flex; align-items:center; gap:12px; }
+    .notif-icon { position:relative; font-size:1.1rem; }
+    .notif-icon .badge {
+      position:absolute; top:-6px; right:-10px; background:#dc3545; color:#fff;
+      border-radius:50%; padding:2px 6px; font-size:0.7rem;
+    }
+
+    .grid {
+      display:grid; grid-template-columns: 1fr 1fr 0.8fr; gap:18px;
+      max-width:1200px; padding:16px; margin: 0 auto;
+    }
+    .card {
+      background:#fff; border:1px solid #eaeaea; border-radius:12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .card h2 {
+      font-size:1.1rem; padding:14px 16px; border-bottom:1px solid #eee; margin:0;
+    }
+    .card-body { padding:14px 16px; }
+    .ticket-item {
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap:10px; padding:10px 0; border-bottom:1px dashed #eee;
+    }
+    .ticket-item:last-child { border-bottom:none; }
+    .muted { color:#666; font-size:.85rem; }
+    .badges { display:flex; gap:8px; align-items:center; }
+    .badge {
+      display:inline-block; padding:2px 6px; font-size:.75rem;
+      border-radius:999px; background:#eef2ff; color:#3b5bdb;
+    }
+    .badge.gray { background:#f2f2f2; color:#555; }
+    .row-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+    /* ------ Botones ------ */
+    .btn {
+      display:inline-block; border:none; cursor:pointer;
+      padding:8px 12px; border-radius:8px; font-size:.9rem;
+      background:#f1f3f5; color:#333;
+    }
+    .btn:hover { filter:brightness(.98); }
+    .btn-primary { background:#0d6efd; color:#fff; }
+    .btn-success { background:#2fb344; color:#fff; }
+    .btn-gray { background:#eceff4; color:#333; }
+    .btn-outline {
+      background:#fff; color:#0d6efd; border:1px solid #0d6efd;
+    }
+
+    select, textarea, input[type="text"] {
+      width:100%; padding:8px 10px; border:1px solid #e1e1e1;
+      border-radius:8px; outline:none; font-size:.92rem;
+    }
+
+    /* ------ Chat: burbuja flotante ------ */
+    .fab-chat {
+      position:fixed; right:22px; bottom:22px; z-index:1000;
+      display:flex; align-items:center; gap:10px;
+      background:#0d6efd; color:#fff; border-radius:999px;
+      padding:10px 14px; text-decoration:none; box-shadow:0 6px 18px rgba(13,110,253,.35);
+    }
+    .fab-chat:hover { filter:brightness(1.05); }
+    .fab-icon {
+      width:30px; height:30px; border-radius:50%;
+      display:grid; place-items:center; background:rgba(255,255,255,.15);
+      font-size:18px;
+    }
+
+    /* Pequeñas ayudas */
+    .mini {
+      font-size:.8rem; color:#666; margin-top:6px;
+    }
+    .split {
+      display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div>Soporte: {{ first_name }} {{ last_name }}</div>
+    <div class="notif-wrap">
+      <a class="btn btn-outline" href="{{ url_for('notifications_view') }}">
+        🔔 Notificaciones
+      </a>
+      <a href="{{ url_for('logout') }}" class="btn btn-gray">Salir</a>
+    </div>
+  </header>
+
+  <main class="grid">
+
+    <!-- Columna 1: Tickets abiertos -->
+    <section class="card">
+      <h2>Tickets abiertos</h2>
+      <div class="card-body">
+        {% if open_tickets %}
+          {% for t in open_tickets %}
+          <div class="ticket-item">
+            <div>
+              <div><strong>{{ t.tema }}</strong>
+                <span class="badge gray">({{ t.priority|default('media')|capitalize }})</span>
+              </div>
+              <div class="muted">{{ t.descripcion }}</div>
+            </div>
+            <form method="post" class="row-actions" style="margin-left:auto;">
+              <input type="hidden" name="ticket_id" value="{{ t._id }}">
+              <input type="hidden" name="action" value="asignar">
+              <div class="split">
+                <label class="muted">Prioridad:</label>
+                <select name="priority">
+                  <option value="alta"  {% if t.priority=='alta' %}selected{% endif %}>Alta</option>
+                  <option value="media" {% if t.priority=='media' %}selected{% endif %}>Media</option>
+                  <option value="baja"  {% if t.priority=='baja' %}selected{% endif %}>Baja</option>
+                </select>
+              </div>
+              <button class="btn btn-success" type="submit">Asignarme</button>
+            </form>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="muted">No hay tickets abiertos.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- Columna 2: Mis tickets en curso -->
+    <section class="card">
+      <h2>Mis tickets en curso</h2>
+      <div class="card-body">
+        {% if assigned %}
+          {% for t in assigned %}
+          <div class="ticket-item">
+            <div>
+              <div><strong>{{ t.tema }}</strong>
+                <span class="badge gray">({{ t.priority|default('media')|capitalize }})</span>
+              </div>
+              <div class="muted">{{ t.descripcion }}</div>
+              <div class="mini">Cliente: {{ t.cliente }}</div>
+            </div>
+            <div class="row-actions">
+              <a class="btn btn-gray" href="{{ url_for('ticket_detail', tid=t._id) }}">Ver detalle</a>
+              <!-- Botón resolver con nota -->
+              <button class="btn btn-success" type="button" onclick="resolverConNota('{{ t._id }}')">
+                Resolver
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="muted">No tienes tickets asignados.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- Columna 3: Resolver un ticket (panel rápido) -->
+    <section class="card">
+      <h2>Resolver un ticket</h2>
+      <div class="card-body">
+        <form method="post" id="form-resolver">
+          <input type="hidden" name="action" value="resolver">
+          <input type="hidden" name="ticket_id" id="resolver_ticket_id">
+          <input type="hidden" name="solution" id="resolver_solution">
+        </form>
+
+        <form method="post">
+          <input type="hidden" name="action" value="resolver">
+          <label class="muted">Selecciona un ticket asignado:</label>
+          <select name="ticket_id" required>
+            <option value="" disabled selected>— Selecciona —</option>
+            {% for t in assigned %}
+              <option value="{{ t._id }}">{{ t.tema }} — {{ t.cliente }}</option>
+            {% endfor %}
+          </select>
+
+          <label class="muted" style="margin-top:10px;">Escribe la solución aplicada (opcional):</label>
+          <textarea name="solution" rows="4" placeholder="Describe la solución..."></textarea>
+
+          <button type="submit" class="btn btn-primary" style="margin-top:10px;">Marcar como Resuelto</button>
+        </form>
+
+        <p class="mini">
+          Consejo: puedes usar el botón <strong>Resolver</strong> de cada tarjeta para escribir rápidamente la solución en una ventana emergente.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Burbuja flotante del chat -->
+  <a href="{{ url_for('experto_page') }}" class="fab-chat" title="Asistente Virtual">
+    <span class="fab-icon">💬</span><span>Asistente</span>
+  </a>
+
+  <script>
+    // Prompt sencillo para escribir una solución y resolver
+    function resolverConNota(id) {
+      const nota = window.prompt("Escribe la solución aplicada (opcional):", "");
+      if (nota === null) return; // cancelado
+      const f = document.getElementById('form-resolver');
+      f.querySelector('#resolver_ticket_id').value = id;
+      f.querySelector('#resolver_solution').value = nota || "";
+      f.submit();
+    }
+  </script>
+</body>
+</html>

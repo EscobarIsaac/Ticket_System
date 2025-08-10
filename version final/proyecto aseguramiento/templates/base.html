@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}TicketSystem{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <!-- inline alert styles if desired -->
+</head>
+<body class="bg-white">
+
+  <!-- Header común con icono de notificaciones -->
+  <header class="header">
+    <div>{% block header_text %}{% endblock %}</div>
+    <div class="notif-icon">
+      <a href="{{ url_for('notifications_view') }}">🔔
+        {% if notif_count>0 %}<span class="badge">{{ notif_count }}</span>{% endif %}
+      </a>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout">Salir</a>
+  </header>
+
+  <!-- Bloque de notificaciones flash -->
+  <div class="notifications">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat,msg in messages %}
+        <div class="alert {{cat}}">{{msg}}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  {% block content %}{% endblock %}
+
+  <!-- auto‐hide script -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const alerts = document.querySelectorAll('.alert');
+      if (!alerts.length) return;
+      setTimeout(() => alerts.forEach(a => a.classList.add('hide')), 2500);
+    });
+  </script>
+</body>
+</html>
