@@ -67,6 +67,10 @@ cd tickets-prolog
 ### 2) Crear y activar entorno virtual
 ```bash
 # Windows (PowerShell)
+deactivate
+Remove-Item -Recurse -Force .\venv
+
+Seguidamente se ejecutan los siguientes comandos 
 python -m venv venv
 venv\Scripts\activate
 
@@ -112,7 +116,7 @@ Abre: http://127.0.0.1:5000
 ## 🧪 Ejecutar pruebas
 Asegúrate de tener el venv activo y dependencias instaladas:
 ```bash
-pytest -q
+pytest
 ```
 Las pruebas incluyen:
 - **Auth** (login/registro)
